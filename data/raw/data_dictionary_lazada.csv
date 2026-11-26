@@ -1,0 +1,73 @@
+﻿nhom,cot,mo_ta,kieu,pct_co,vi_du,ghi_chu
+A-listing,crawl_time,Thời điểm thu thập listing,chữ,100.0,2026-11-13 11:15:41,kỹ thuật/chuỗi gốc - không phân tích trực tiếp
+A-listing,search_page,Trang tìm kiếm,số,100.0,1,kỹ thuật/chuỗi gốc - không phân tích trực tiếp
+A-listing,rank_in_page,Vị trí trong trang,số,100.0,1,
+A-listing,item_id,Mã sản phẩm,chữ,100.0,3026831742,định danh - không phân tích
+A-listing,sku_id,Mã SKU mặc định,chữ,100.0,14566150544,định danh - không phân tích
+A-listing,name,Tên sản phẩm,chữ,100.0,【Best Selling】Tai nghe  UGREEN Max5c khô,văn bản tự do
+A-listing,brand,Thương hiệu,chữ,100.0,UGREEN,
+A-listing,brand_id,Mã thương hiệu,chữ,100.0,15054,định danh - không phân tích
+A-listing,category_ids,Mã danh mục (nối |),chữ,100.0,10100387|5009|4584,định danh - không phân tích
+A-listing,price,Giá bán (VND),số,100.0,862000.0,
+A-listing,original_price,Giá gốc (VND),số,95.3,1099000.0,
+A-listing,discount_raw,% giảm (chuỗi gốc),chữ,95.3,22% Off,kỹ thuật/chuỗi gốc - không phân tích trực tiếp
+A-listing,discount_pct,% giảm giá,số,95.3,22.0,
+A-listing,rating_score,Điểm đánh giá TB,số,94.1,4.937,
+A-listing,review_count,Số lượt đánh giá,số,94.4,1593.0,
+A-listing,sold_raw,Lượt bán (chuỗi gốc),chữ,91.2,7.9K Đã bán,kỹ thuật/chuỗi gốc - không phân tích trực tiếp
+A-listing,sold_num,Lượt bán (số),số,91.2,7900.0,
+A-listing,location,Nơi gửi hàng,chữ,99.5,Thành phố Hồ Chí Minh,
+A-listing,seller_name,Tên shop,chữ,100.0,UGREEN Vietnam,
+A-listing,seller_id,Mã người bán,chữ,100.0,200878512065,định danh - không phân tích
+A-listing,shop_id,Mã shop,chữ,100.0,4948151,định danh - không phân tích
+A-listing,is_lazmall,LazMall (0/1),bool,100.0,1,
+A-listing,is_freeship,Freeship (0/1),bool,100.0,1,
+A-listing,is_sponsored,Quảng cáo (0/1),bool,100.0,0,
+A-listing,in_stock,Còn hàng (0/1),bool,100.0,1,
+A-listing,url,Đường dẫn,chữ,100.0,https://www.lazada.vn/products/pdp-i3026,kỹ thuật/chuỗi gốc - không phân tích trực tiếp
+B-chi tiet,category_path,Đường dẫn danh mục,chữ,99.3,Âm thanh > Các loại tai nghe > Tai nghe ,
+B-chi tiet,product_type,Loại tai nghe (danh mục cấp 3),chữ,99.3,Tai nghe chụp tai cỡ lớn,
+B-chi tiet,positive_seller_rating,% đánh giá tích cực của shop,số,98.9,99.0,
+B-chi tiet,ship_on_time_rate,% giao nhanh/đúng hạn,số,80.4,100.0,
+B-chi tiet,chat_response_rate,% phản hồi chat (không có),trống,0.0,,
+B-chi tiet,response_time_raw,Thời gian phản hồi chat (chuỗi),chữ,51.4,Phản hồi nhanh: Trung bình 8 phút,
+B-chi tiet,store_sold_raw,Tổng đã bán của shop (chuỗi),chữ,85.8,49.3K đã bán tại cửa hàng,kỹ thuật/chuỗi gốc - không phân tích trực tiếp
+B-chi tiet,store_sold_num,Tổng đã bán của shop (số),số,85.8,49300.0,
+B-chi tiet,repurchase_rate,% khách mua lại,số,49.1,32.0,
+B-chi tiet,returning_customers,Số khách quay lại,số,45.5,606.0,
+B-chi tiet,seller_tags_raw,Nhãn shop (chuỗi gốc),chữ,99.1,Top 1 người bán ngành Thiết bị theo dõi ,kỹ thuật/chuỗi gốc - không phân tích trực tiếp
+B-chi tiet,is_new_seller,Shop mới (0/1),bool,99.3,0.0,
+B-chi tiet,rating_avg_detail,Điểm TB (trang chi tiết),số,93.7,4.9,
+B-chi tiet,rating_count_detail,Số đánh giá (trang chi tiết),số,99.3,1593.0,
+B-chi tiet,star_5,Số đánh giá 5 sao,số,10.8,1540.0,
+B-chi tiet,star_4,Số đánh giá 4 sao,số,10.8,30.0,
+B-chi tiet,star_3,Số đánh giá 3 sao,số,10.8,9.0,
+B-chi tiet,star_2,Số đánh giá 2 sao,số,10.8,3.0,
+B-chi tiet,star_1,Số đánh giá 1 sao,số,10.8,11.0,
+B-chi tiet,n_variants,Số biến thể,số,99.3,3.0,
+B-chi tiet,variant_names,Tên biến thể,chữ,81.3,Đen - ANC | Trắng - ANC | Xanh lam - ANC,văn bản tự do
+B-chi tiet,bluetooth_version,Phiên bản Bluetooth,chữ,85.6,5.4,
+B-chi tiet,battery_hours,Thời lượng pin (giờ),chữ,39.2,75,
+B-chi tiet,waterproof,Chống nước,chữ,56.1,Có,
+B-chi tiet,model,Model,chữ,63.5,hitune max5c,văn bản tự do
+B-chi tiet,connection,Kết nối,chữ,2.7,Không dây,
+B-chi tiet,driver_type,Loại driver,chữ,93.5,Năng động,
+B-chi tiet,impedance,Trở kháng,chữ,79.1,32 ohm,
+B-chi tiet,warranty,Thời gian bảo hành,chữ,53.4,18 tháng,
+B-chi tiet,warranty_type,Loại bảo hành,chữ,96.8,Bảo hành của nhà sản xuất quốc tế,
+B-chi tiet,is_authentic_guarantee,Cam kết chính hãng (0/1),bool,99.3,1.0,
+B-chi tiet,cod_available,Hỗ trợ COD (0/1),bool,10.8,1.0,
+B-chi tiet,shipping_fee,Phí giao tiêu chuẩn (VND),số,87.4,19600.0,
+B-chi tiet,delivery_time,Thời gian giao dự kiến,chữ,80.0,Đảm bảo nhận vào 15-18 thg 11,kỹ thuật/chuỗi gốc - không phân tích trực tiếp
+B-chi tiet,n_promotions,Số khuyến mãi/voucher,số,10.8,2.0,
+B-chi tiet,specs_raw,Toàn bộ thông số (JSON),chữ,99.3,"{""Thương hiệu"": ""UGREEN"", ""Thời gian sử ",kỹ thuật/chuỗi gốc - không phân tích trực tiếp
+B-chi tiet,shop_age_years,Số năm shop hoạt động (giao diện),số,60.6,5.0,
+B-chi tiet,reviews_with_media,Số đánh giá có hình/video,số,88.5,219.0,
+B-chi tiet,review_tag_repurchase,Số đánh giá gắn nhãn 'Khách đã mua lại',số,88.5,13.0,
+B-chi tiet,review_tags_raw,Nhãn đánh giá (chuỗi gốc),chữ,45.5,Đánh giá(621) | Có hình/video(219) | Khá,
+B-chi tiet,detail_status,Trạng thái lấy chi tiết,chữ,100.0,ok,kỹ thuật/chuỗi gốc - không phân tích trực tiếp
+B-chi tiet,detail_time,Thời điểm lấy chi tiết,chữ,99.5,2026-11-13 11:01:31,kỹ thuật/chuỗi gốc - không phân tích trực tiếp
+B-chi tiet,battery_hours_num,"Thời lượng pin (giờ, số)",số,38.7,75.0,
+B-chi tiet,bluetooth_version_num,Phiên bản Bluetooth (số),số,85.4,5.4,
+B-chi tiet,impedance_ohm,"Trở kháng (ohm, số)",số,67.6,32.0,
+B-chi tiet,warranty_months,"Thời gian bảo hành (tháng, số)",số,53.4,18.0,
