@@ -360,7 +360,7 @@ Mỗi lần xong một phần: thêm một dòng vào 6.1, đánh dấu ✅ ở 
 | Ngày | Người | Bước | Đã làm | File đẩy lên |
 |---|---|---|---|---|
 | 25/11 | Huy | Dữ liệu | Thu thập và đưa lên bộ dữ liệu Lazada 1.550 dòng × 73 cột | `data/lazada_tai_nghe_1500.csv`, `data/README.md` |
-| 26/11 | Huy | Chuẩn bị | Viết pipeline, đưa dữ liệu thô + log cào, thêm hàm lưu/nạp mô hình | `PIPELINE_DO_AN_ML.md`, `data/raw/`, `luu_mo_hinh.py` |
+| 26/11 | Huy | Chuẩn bị | Viết pipeline, đưa dữ liệu thô + log cào | `PIPELINE_DO_AN_ML.md`, `data/raw/` |
 | 26/11 | Huy | **B0** ✅ | Định nghĩa bài toán (hồi quy `log10(price)`, dự đoán lúc vừa đăng bán); danh sách 21 cột rò rỉ; 5 thang đo (chính: RMSE log); mục tiêu R² ≥ 0,55 theo GroupKFold ≈ RMSE log 0,282; quy tắc chọn mô hình | `notebooks/01_chuan_bi_du_lieu.ipynb` (mục B0), `chung.py` (`tinh_thang_do`, `rmse_log`, `mae_vnd`, `mape`, `ty_le_trung_20`, `COT_RO_RI`) |
 | 26/11 | Huy | **B1** ✅ | Làm sạch 1.550 → **1.539 dòng** (bỏ 11 dòng giá ngoài 30k–20tr). **Đổi luật:** 35 dòng danh mục lạ đều là tai nghe thật → giữ, xóa `product_type`, thêm cờ `sai_danh_muc`; thêm cờ `thieu_chi_tiet` (153 dòng timeout/app_only); làm sạch ký tự lạ trong tên | `notebooks/01_chuan_bi_du_lieu.ipynb` (mục B1), `chung.py` (`lam_sach`), `data/lazada_sach.csv` |
 

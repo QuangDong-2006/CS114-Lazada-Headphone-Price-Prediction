@@ -221,3 +221,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# File chỉ giữ trên máy, không đưa lên GitHub
+luu_mo_hinh.py
