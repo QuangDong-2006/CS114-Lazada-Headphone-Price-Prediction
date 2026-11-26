@@ -4,6 +4,8 @@ Cập nhật: 26/11/2026. **Hạn nộp: 06/12/2026 (10 ngày, xem lịch ở m�
 
 Ký hiệu: ✅ có sẵn từ dữ liệu đã cào · ⬜ cần làm · ⭐ phần nâng cao, làm nếu còn thời gian
 
+**Tiến độ:** xem [mục 6](#6-tiến-độ) (ai đã làm gì, đẩy lên file nào).
+
 ---
 
 ## 0. Phân biệt với đồ án DS111 (quan trọng)
@@ -51,7 +53,7 @@ Nên viết một câu như trên vào báo cáo cả hai môn để chủ độ
 
 ## 2. Chi tiết từng bước
 
-### B0. Định nghĩa bài toán ⬜
+### B0. Định nghĩa bài toán ✅ (26/11: `notebooks/01_chuan_bi_du_lieu.ipynb` mục B0, thang đo trong `chung.py`)
 
 - **Bài toán:** hồi quy có giám sát. Đầu vào là thông tin có sẵn **lúc đăng bán** một tai nghe (tên, thương hiệu, thông số, shop). Đầu ra là giá bán.
 - **Biến mục tiêu:** `log10(price)` (giá lệch phải rất mạnh, log giúp sai số tương đối đều giữa hàng rẻ và hàng đắt). Báo cáo kết quả đổi lại về VNĐ.
@@ -63,16 +65,16 @@ Nên viết một câu như trên vào báo cáo cả hai môn để chủ độ
   - Luôn báo cáo thêm điểm KFold ngẫu nhiên bên cạnh để cho thấy chênh lệch.
 - ⭐ Bài toán phụ: phân loại phân khúc giá (rẻ / trung / cao) để có thêm thang đo phân loại (F1, confusion matrix). Chỉ làm nếu thầy yêu cầu có cả phân loại.
 
-### B1. Làm sạch dữ liệu ⬜ (Người 1)
+### B1. Làm sạch dữ liệu ✅ (Người 1) (26/11: notebook 01 mục B1, hàm `chung.lam_sach()`, đầu ra `data/lazada_sach.csv`)
 
 - Nguồn: tự cào Lazada.vn (Python `requests` cho trang tìm kiếm, Agent AI đọc trang chi tiết). Code và log trong `DoAn_DS111/scraper/`.
 - **Bộ dùng chính thức: `data/raw/lazada_tai_nghe_1500.csv`** (1.550 dòng × 73 cột, 323–330 shop, 5 từ khóa tìm kiếm). Bộ 444 dòng cũ chỉ dùng để vẽ learning curve ở B7. Không dựa vào `data/clean/` của DS111 (không có trong thư mục này).
 - Luật làm sạch (ghi số dòng còn lại sau mỗi bước vào báo cáo):
   1. Bỏ trùng `item_id`.
-  2. Bỏ dòng có `product_type` không phải tai nghe: "Phụ kiện thời trang khác", "Phụ kiện trò chơi điện tử khác", "Loa & hệ thống giao tiếp", "Bảo vệ tai" (~16 dòng).
+  2. ~~Bỏ dòng có `product_type` không phải tai nghe~~ → **đổi luật:** 35 dòng có danh mục lạ (23 loại: "Mật Ong", "Thắt lưng nữ"…) đọc tên thì **đều là tai nghe thật** (Anker Liberty 5, Bose QC Ultra, Redmi Buds 6…), shop chọn sai danh mục. Giữ dòng, đặt `product_type` = trống, thêm cờ `sai_danh_muc`.
   3. Giữ giá trong **30.000 – 20.000.000 đ** (bỏ ~11 dòng, trong đó 1 sản phẩm 77 triệu).
-  4. **150 dòng `detail_status = timeout`**: thiếu tên shop và mọi thông số chi tiết, chỉ có cột listing. Giữ lại (vẫn có tên, giá, nơi bán) nhưng phải xử lý `seller_name` thiếu ở B4.
-- Dự kiến còn ~1.520 dòng.
+  4. **150 dòng `timeout` + 3 dòng `app_only`** (cờ `thieu_chi_tiet`): thiếu tên shop và mọi thông số chi tiết, chỉ có cột listing. Giữ lại (vẫn có tên, giá, nơi bán) nhưng phải xử lý `seller_name` thiếu ở B4.
+- **Kết quả: 1.550 → 1.539 dòng** (chỉ bỏ 11 dòng theo giá), 326 shop có tên, 151 dòng thiếu tên shop.
 
 ### B2. EDA hướng Machine Learning ⬜
 
@@ -348,3 +350,37 @@ DoAn_ML/
 ```
 
 Thư viện: pandas, numpy, scikit-learn, matplotlib, seaborn, xgboost hoặc lightgbm, ⭐ shap, optuna, streamlit, joblib.
+
+## 6. Tiến độ
+
+Mỗi lần xong một phần: thêm một dòng vào 6.1, đánh dấu ✅ ở tiêu đề bước tương ứng (mục 2), rồi push.
+
+### 6.1 Nhật ký công việc
+
+| Ngày | Người | Bước | Đã làm | File đẩy lên |
+|---|---|---|---|---|
+| 25/11 | Huy | Dữ liệu | Thu thập và đưa lên bộ dữ liệu Lazada 1.550 dòng × 73 cột | `data/lazada_tai_nghe_1500.csv`, `data/README.md` |
+| 26/11 | Huy | Chuẩn bị | Viết pipeline, đưa dữ liệu thô + log cào, thêm hàm lưu/nạp mô hình | `PIPELINE_DO_AN_ML.md`, `data/raw/`, `luu_mo_hinh.py` |
+| 26/11 | Huy | **B0** ✅ | Định nghĩa bài toán (hồi quy `log10(price)`, dự đoán lúc vừa đăng bán); danh sách 21 cột rò rỉ; 5 thang đo (chính: RMSE log); mục tiêu R² ≥ 0,55 theo GroupKFold ≈ RMSE log 0,282; quy tắc chọn mô hình | `notebooks/01_chuan_bi_du_lieu.ipynb` (mục B0), `chung.py` (`tinh_thang_do`, `rmse_log`, `mae_vnd`, `mape`, `ty_le_trung_20`, `COT_RO_RI`) |
+| 26/11 | Huy | **B1** ✅ | Làm sạch 1.550 → **1.539 dòng** (bỏ 11 dòng giá ngoài 30k–20tr). **Đổi luật:** 35 dòng danh mục lạ đều là tai nghe thật → giữ, xóa `product_type`, thêm cờ `sai_danh_muc`; thêm cờ `thieu_chi_tiet` (153 dòng timeout/app_only); làm sạch ký tự lạ trong tên | `notebooks/01_chuan_bi_du_lieu.ipynb` (mục B1), `chung.py` (`lam_sach`), `data/lazada_sach.csv` |
+
+### 6.2 Trạng thái từng bước
+
+| Bước | Người phụ trách | Trạng thái | Hạn |
+|---|---|---|---|
+| B0 Bài toán + thang đo | Người 3 | ✅ Xong (Huy, 26/11) | 27/11 |
+| B1 Làm sạch | Người 1 | ✅ Xong (Huy, 26/11) | 27/11 |
+| B2 EDA hướng ML | Người 2 | ⬜ Chưa | 27/11 |
+| B3 Đặc trưng + `tao_preprocessor()` | Người 1 | ⬜ Chưa | 28/11 |
+| B4 Chia test + cột `fold` | Người 2 | ⬜ Chưa | 28/11 |
+| B5 Baseline + `danh_gia_cv()` + `requirements.txt` | Người 3 | ⬜ Chưa | 28/11 |
+| B6 Ba mô hình | Cả 3 | ⬜ Chưa | 02/12 |
+| B7–B8 So sánh, ensemble, giải thích | Cả nhóm | ⬜ Chưa | 04/12 |
+| B9 Demo ⭐ | Người 3 | ⬜ Chưa | 04/12 |
+| B10 Báo cáo + slide | Cả nhóm | ⬜ Chưa | 06/12 |
+
+### 6.3 Việc cần người khác biết
+
+- **Từ B1 cho cả nhóm:** dùng `chung.lam_sach()` hoặc đọc `data/lazada_sach.csv`, đừng tự lọc lại. Số dòng chính thức là **1.539** (các con số "1.523 dòng" ở mục 4.1 là của lần thử nhanh cũ; B5 sẽ chấm lại mốc 0,307).
+- **Cho Người 2 (B2):** `battery_hours_num` có giá trị 220h ở tai nghe 60k; `brand` viết không thống nhất (hoa/thường, trống dù tên có thương hiệu); `location` có cả "China" và "Nước ngoài".
+
