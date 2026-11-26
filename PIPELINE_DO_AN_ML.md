@@ -141,6 +141,13 @@ Ba mô hình thuộc ba cách học khác nhau, nên khi so sánh sẽ có đi�
 
 **Luật công bằng khi so sánh:** cùng `abt_gia.csv`, cùng cột `fold`, cùng hàm `danh_gia_cv`; tinh chỉnh bằng `RandomizedSearchCV` với **cùng ngân sách `n_iter=50`** (Optuna thì 50 trial); `scoring="neg_root_mean_squared_error"`; ghi lại thời gian huấn luyện.
 
+**Lưu mô hình để không phải huấn luyện lại** (bắt buộc cho mọi bước fit hoặc tính lâu): dùng `luu_mo_hinh.py` ở thư mục gốc.
+- `huan_luyen_hoac_tai(ten, mo_hinh, X, y, **fit_params)` thay cho `mo_hinh.fit(X, y)`, dùng cho Pipeline, `RandomizedSearchCV` (truyền `groups=`), Voting/Stacking.
+- `tinh_hoac_tai(ten, ham, *args, **kwargs)` cho `danh_gia_cv`, `learning_curve`, `validation_curve`, `permutation_importance`.
+- Lần chạy đầu: fit rồi lưu `models/<ten>.joblib` (mô hình) và `models/<ten>.json` (tham số, `best_params`, điểm CV, thời gian, phiên bản thư viện). Các lần sau: dữ liệu và tham số không đổi thì nạp lại ngay. Có thay đổi thì tự huấn luyện lại. Muốn ép chạy lại thì truyền `lam_lai=True`.
+- Tên bắt đầu bằng mã người: `L_`, `T_`, `K_`, `E_` (ví dụ `T_xgb_search`). Commit cả hai file trong `models/` để người khác (và B7) nạp được mà không phải chạy lại. File `.json` chính là "bộ tham số tốt nhất" của bước 8.
+- Cả nhóm dùng **cùng phiên bản scikit-learn** (ghi trong `requirements.txt`), vì file `.joblib` có thể không nạp được ở phiên bản khác.
+
 **Khung chung 8 bước cho cả 3 notebook** (để ghép báo cáo đồng đều):
 
 1. **Lý thuyết:** ý tưởng, hàm mất mát, siêu tham số chính, ưu nhược điểm.
@@ -245,6 +252,7 @@ Nếu trễ: cắt các mục ⭐ trước (Optuna, SHAP, demo Streamlit, MLP), 
 - Notebook chạy lại từ đầu (Restart & Run All) không lỗi, chỉ đọc `abt_gia.csv` và import `chung.py`.
 - Mỗi notebook mô hình có đủ 8 bước, và bảng kết quả ra từ `danh_gia_cv`.
 - Bộ tham số tốt nhất ghi ở ô cuối dạng dict để B7 dựng lại.
+- Mọi lần fit và tính lâu đều qua `luu_mo_hinh.py`; file trong `models/` đã được commit, nên Restart & Run All lần hai chạy trong vài giây.
 - Mọi kịch bản đã chạy đều có dòng trong nhật ký thử nghiệm (mục 4).
 - Một người khác trong nhóm đọc chéo trước khi đánh dấu xong (Người 1 ↔ 2, 2 ↔ 3, 3 ↔ 1).
 
@@ -325,6 +333,7 @@ DoAn_ML/
 ├─ PIPELINE_DO_AN_ML.md          ← file này
 ├─ requirements.txt               phiên bản thư viện (Người 3)
 ├─ chung.py                       tao_preprocessor(), danh_gia_cv(), đọc fold (Người 1 giữ)
+├─ luu_mo_hinh.py                 lưu / nạp mô hình và kết quả đã huấn luyện (models/)
 ├─ data/raw/                      dữ liệu thô (không sửa)
 ├─ data/abt_gia.csv               bảng dùng chung (có cột split, fold)
 ├─ notebooks/
@@ -333,7 +342,7 @@ DoAn_ML/
 │  ├─ 02b_tree_ensemble.ipynb     Người 2
 │  ├─ 02c_svr_knn.ipynb           Người 3
 │  └─ 03_so_sanh_va_ensemble.ipynb B7–B8
-├─ models/model_gia.joblib
+├─ models/                       <ten>.joblib + <ten>.json cho từng mô hình, model_gia.joblib (mô hình cuối)
 ├─ app.py                         ⭐ demo Streamlit
 └─ bao_cao/
 ```
