@@ -30,39 +30,131 @@ LOAI_TAI_NGHE = [
     "Tai nghe không dây", "Tai nghe chụp tai cỡ lớn", "Tai nghe nhét tai",
     "Tai nghe hở tai", "Tai nghe chụp tai", "Tai nghe một bên kèm mic",
 ]
-GIA_MIN, GIA_MAX = 30_000, 20_000_000
+# Ngưỡng ngoại lệ giá = hàng rào Tukey 3×IQR trên log10(price) của bộ thô (dẫn chứng ở notebook B1.2):
+# 10**(Q1 - 3·IQR) ≈ 2.921 đ, 10**(Q3 + 3·IQR) ≈ 20.141.427 đ → làm tròn. Cố định thành hằng số
+# để không phụ thuộc cách chia dữ liệu. Chỉ loại 1 dòng (Kinera 77,2 triệu).
+GIA_MIN, GIA_MAX = 3_000, 20_000_000
+
+
+# Giá trị giữ chỗ (shop không khai) → coi là trống. So khớp NGUYÊN Ô, sau khi strip.
+GIA_TRI_RONG = {"info unavailable", "default", "khác", "không áp dụng", "no", "not rated",
+                "none", "n/a", "na", "-", "không", "null", ""}
+COT_THONG_SO_CHU = ["bluetooth_version", "battery_hours", "waterproof", "model", "connection",
+                    "driver_type", "impedance", "warranty", "warranty_type"]
+# Tên thương hiệu thực chất là "không thương hiệu" (đã đọc toàn bộ 204 giá trị brand)
+BRAND_KHONG_TH = {"no brand", "nobard", "oem", "tws"}
+# Khoảng hợp lệ của thông số (ngoài khoảng → trống, để Imputer điền ở B3). Dẫn chứng ở notebook B1.4
+KHOANG_HOP_LE = {
+    "bluetooth_version_num": (4.0, 6.1),   # chuẩn Bluetooth SIG; 1 / 3 không còn trên tai nghe 2026
+    "battery_hours_num": (1, 100),         # tai nghe chụp tai flagship tối đa ~80–100 h; 0 h vô nghĩa
+    "impedance_ohm": (4, 200),             # tai nghe Bluetooth 16–64 Ω; 300 Ω là thông số tai nghe có dây
+    "warranty_months": (0, 60),
+}
+
+
+def _chuan_hoa_chuoi(s):
+    """Bỏ BOM, tab, khoảng trắng thừa ở đầu/cuối/giữa."""
+    return (s.str.replace("﻿", "", regex=False)
+             .str.replace(r"\s+", " ", regex=True).str.strip())
 
 
 def lam_sach(raw):
-    """Luật làm sạch B1. Chỉ dùng thông tin của từng dòng, nên làm trước khi chia train/test.
+    """Luật làm sạch B1. Mọi luật chỉ dùng thông tin của chính dòng đó (ngưỡng là hằng số cố định),
+    nên làm trước khi chia train/test mà không rò rỉ.
 
-    Trả về (df_sach, nhat_ky) với nhat_ky là list (bước, số dòng bỏ, số dòng còn).
+    Trả về (df_sach, nhat_ky_dong, nhat_ky_sua):
+      - nhat_ky_dong: list (bước, số dòng bỏ, số dòng còn)
+      - nhat_ky_sua : list (bước, cột, số ô bị sửa) cho các luật sửa giá trị, không bỏ dòng
     """
     df = raw.copy()
-    nhat_ky = [("0. Dữ liệu thô", 0, len(df))]
+    nhat_ky_dong = [("0. Dữ liệu thô", 0, len(df))]
+    nhat_ky_sua = []
 
-    def ghi(buoc, truoc):
-        nhat_ky.append((buoc, truoc - len(df), len(df)))
+    def ghi_dong(buoc, truoc):
+        nhat_ky_dong.append((buoc, truoc - len(df), len(df)))
 
-    n = len(df); df = df.drop_duplicates("item_id"); ghi("1. Bỏ trùng item_id", n)
+    def ghi_sua(buoc, cot, mask):
+        nhat_ky_sua.append((buoc, cot, int(mask.sum())))
 
-    # Mọi dòng đều là tai nghe (đã đọc tên từng dòng ở B1); 35 dòng shop chọn sai danh mục
-    # ("Mật Ong", "Thắt lưng nữ"...) được GIỮ, chỉ xóa product_type sai và gắn cờ.
+    # ---- A. Chuẩn hóa chuỗi (làm trước để so trùng chính xác)
+    for c in ["name", "seller_name", "brand", "location"] + COT_THONG_SO_CHU:
+        truoc = df[c].copy()
+        df[c] = _chuan_hoa_chuoi(df[c])
+        ghi_sua("A1. Bỏ BOM/tab/khoảng trắng thừa", c, (truoc != df[c]) & truoc.notna())
+    for c in COT_THONG_SO_CHU:
+        m = df[c].str.lower().isin(GIA_TRI_RONG)
+        df.loc[m, c] = np.nan
+        ghi_sua("A2. Giá trị giữ chỗ → trống", c, m)
+    # Tên shop: gộp các cách viết chỉ khác hoa/thường (quan trọng cho GroupKFold theo shop)
+    khoa = df["seller_name"].str.lower()
+    chuan = df.groupby(khoa)["seller_name"].agg(lambda s: s.value_counts().index[0])
+    moi = khoa.map(chuan)
+    ghi_sua("A3. Gộp cách viết tên shop", "seller_name", (moi != df["seller_name"]) & moi.notna())
+    df["seller_name"] = moi
+    m = df["location"].eq("Hồ Chí Minh")
+    df.loc[m, "location"] = "Thành phố Hồ Chí Minh"
+    ghi_sua("A4. Gộp tên nơi bán", "location", m)
+
+    # ---- B. Bỏ dòng
+    n = len(df); df = df.drop_duplicates("item_id"); ghi_dong("1. Bỏ trùng item_id", n)
+
+    # Cùng shop đăng lại y hệt (cùng tên, cùng giá) dưới item_id khác → bản sao, giữ bản đầu.
+    # seller trống (timeout) vẫn so được: cặp trống trùng tên + giá được cào cách nhau vài giây.
     n = len(df)
+    df = df.drop_duplicates(["name", "seller_name", "price"], keep="first")
+    ghi_dong("2. Bỏ tin đăng trùng (cùng tên + shop + giá)", n)
+
+    n = len(df); df = df[df["price"].between(GIA_MIN, GIA_MAX)]
+    ghi_dong(f"3. Bỏ ngoại lệ giá (ngoài {GIA_MIN:,} – {GIA_MAX:,} đ)", n)
+
+    # Không bỏ dòng nào vì "không phải tai nghe": đã đọc tên mọi dòng, tất cả đều là tai nghe
+    # Bluetooth; không có tai nghe chỉ có dây (notebook B1.2).
+
+    # ---- C. Sửa giá trị sai
     sai = df["product_type"].notna() & ~df["product_type"].isin(LOAI_TAI_NGHE)
     df["sai_danh_muc"] = sai.astype(int)
     df.loc[sai, "product_type"] = np.nan
-    ghi(f"2. Xóa product_type sai danh mục ({int(sai.sum())} dòng, giữ dòng)", n)
+    ghi_sua("C1. product_type sai danh mục → trống", "product_type", sai)
 
-    n = len(df); df = df[df["price"].between(GIA_MIN, GIA_MAX)]
-    ghi(f"3. Giữ giá {GIA_MIN:,} – {GIA_MAX:,} đ", n)
+    # Thông số ngoài khoảng hợp lệ
+    m = df["impedance"].str.contains(r"mm|dB", case=False, na=False) & df["impedance_ohm"].notna()
+    df.loc[m, "impedance_ohm"] = np.nan          # "14mm" là cỡ driver, "1dB/mW" là độ nhạy
+    ghi_sua("C2. Trở kháng ghi nhầm đơn vị (mm, dB) → trống", "impedance_ohm", m)
+    m = df["battery_hours"].str.contains(r"chờ|standby", case=False, na=False) & df["battery_hours_num"].notna()
+    df.loc[m, "battery_hours_num"] = np.nan      # "Chờ trong 300 giờ" là thời gian chờ, không phải nghe nhạc
+    ghi_sua("C2. Giờ pin là thời gian chờ → trống", "battery_hours_num", m)
+    for c, (lo, hi) in KHOANG_HOP_LE.items():
+        m = df[c].notna() & ~df[c].between(lo, hi)
+        df.loc[m, c] = np.nan
+        ghi_sua(f"C3. Ngoài khoảng hợp lệ {lo}–{hi} → trống", c, m)
 
-    # Chuẩn hóa nhẹ trên từng dòng
-    df["name"] = (df["name"].str.replace("﻿", "", regex=False)
-                  .str.replace(r"\s+", " ", regex=True).str.strip())
+    # Thương hiệu: gộp "không thương hiệu", gộp hoa/thường, lấy từ tiền tố tên "BRAND | ..."
+    df["brand"] = df["brand"].str.rstrip(".").str.strip()
+    m = df["brand"].str.lower().isin(BRAND_KHONG_TH)
+    df.loc[m, "brand"] = "No Brand"
+    ghi_sua("C4. Gộp các tên 'không thương hiệu' → No Brand", "brand", m & ~raw.loc[df.index, "brand"].eq("No Brand"))
+    khoa = df["brand"].str.lower()
+    chuan = df.groupby(khoa)["brand"].agg(lambda s: s.value_counts().index[0])
+    moi = khoa.map(chuan)
+    ghi_sua("C4. Gộp cách viết thương hiệu", "brand", (moi != df["brand"]) & moi.notna())
+    df["brand"] = moi
+    tien_to = df["name"].str.extract(r"^([^|【\[\(]{2,30}?)\s*\|")[0].str.strip()
+    m = df["brand"].isna() & tien_to.notna() & ~tien_to.str.contains("tai nghe", case=False, na=False)
+    df.loc[m, "brand"] = tien_to[m]
+    ghi_sua("C5. Điền thương hiệu trống từ tiền tố tên 'X | ...'", "brand", m)
+    df["brand"] = df["brand"].str.lower().map(
+        df.groupby(df["brand"].str.lower())["brand"].agg(lambda s: s.value_counts().index[0]))
+
+    # Chống nước: viết hoa mã IP
+    m = df["waterproof"].str.match(r"(?i)^ip", na=False) & (df["waterproof"] != df["waterproof"].str.upper())
+    df.loc[m, "waterproof"] = df.loc[m, "waterproof"].str.upper()
+    ghi_sua("C6. Viết hoa mã IP", "waterproof", m)
+
+    # ---- D. Cờ cho các bước sau
     df["thieu_chi_tiet"] = df["detail_status"].isin(["timeout", "app_only"]).astype(int)
+    df["dot_cao"] = df["crawl_time"].str[:10]
     df[TARGET] = np.log10(df["price"])
-    return df.reset_index(drop=True), nhat_ky
+    return df.reset_index(drop=True), nhat_ky_dong, nhat_ky_sua
 
 
 def ve_vnd(y_log):

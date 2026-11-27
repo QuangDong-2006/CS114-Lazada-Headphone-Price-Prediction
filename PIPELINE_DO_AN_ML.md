@@ -65,27 +65,46 @@ Nên viết một câu như trên vào báo cáo cả hai môn để chủ độ
   - Luôn báo cáo thêm điểm KFold ngẫu nhiên bên cạnh để cho thấy chênh lệch.
 - ⭐ Bài toán phụ: phân loại phân khúc giá (rẻ / trung / cao) để có thêm thang đo phân loại (F1, confusion matrix). Chỉ làm nếu thầy yêu cầu có cả phân loại.
 
-### B1. Làm sạch dữ liệu ✅ (Người 1) (26/11: notebook 01 mục B1, hàm `chung.lam_sach()`, đầu ra `data/lazada_sach.csv`)
+### B1. Làm sạch dữ liệu ✅ (Người 1) (26–27/11: notebook 01 mục B1, hàm `chung.lam_sach()`, đầu ra `data/lazada_sach.csv`)
 
 - Nguồn: tự cào Lazada.vn (Python `requests` cho trang tìm kiếm, Agent AI đọc trang chi tiết). Code và log trong `DoAn_DS111/scraper/`.
 - **Bộ dùng chính thức: `data/raw/lazada_tai_nghe_1500.csv`** (1.550 dòng × 73 cột, 323–330 shop, 5 từ khóa tìm kiếm). Bộ 444 dòng cũ chỉ dùng để vẽ learning curve ở B7. Không dựa vào `data/clean/` của DS111 (không có trong thư mục này).
-- Luật làm sạch (ghi số dòng còn lại sau mỗi bước vào báo cáo):
-  1. Bỏ trùng `item_id`.
-  2. ~~Bỏ dòng có `product_type` không phải tai nghe~~ → **đổi luật:** 35 dòng có danh mục lạ (23 loại: "Mật Ong", "Thắt lưng nữ"…) đọc tên thì **đều là tai nghe thật** (Anker Liberty 5, Bose QC Ultra, Redmi Buds 6…), shop chọn sai danh mục. Giữ dòng, đặt `product_type` = trống, thêm cờ `sai_danh_muc`.
-  3. Giữ giá trong **30.000 – 20.000.000 đ** (bỏ ~11 dòng, trong đó 1 sản phẩm 77 triệu).
-  4. **150 dòng `timeout` + 3 dòng `app_only`** (cờ `thieu_chi_tiet`): thiếu tên shop và mọi thông số chi tiết, chỉ có cột listing. Giữ lại (vẫn có tên, giá, nơi bán) nhưng phải xử lý `seller_name` thiếu ở B4.
-- **Kết quả: 1.550 → 1.539 dòng** (chỉ bỏ 11 dòng theo giá), 326 shop có tên, 151 dòng thiếu tên shop.
+- Toàn bộ luật nằm trong `chung.lam_sach()`, trả về dữ liệu sạch + nhật ký số dòng bỏ + nhật ký số ô bị sửa (đưa thẳng vào báo cáo). Luật chỉ dùng thông tin của từng dòng, ngưỡng là hằng số → làm trước khi chia, không rò rỉ. B1 chỉ sửa cái **sai**; chọn cột, điền khuyết, cắt trần, log thuộc B2/B3.
+- **A. Chuẩn hóa chuỗi**
+  - A1. Bỏ BOM, tab, khoảng trắng thừa ở tên, shop, brand, nơi bán, thông số.
+  - A2. Giá trị giữ chỗ → trống: "Info Unavailable" (126 ô trở kháng), "Khác", "default", "Không áp dụng", "No", "Not Rated"…
+  - A3. **Gộp cách viết tên shop.** Shop lớn nhất *Prime Supply_Play Life* (238 dòng) bị tách 2 tên chỉ vì dấu cách ở đầu → nếu không sửa, GroupKFold coi là 2 shop và rò rỉ. 330 → 325 shop.
+  - A4. "Hồ Chí Minh" → "Thành phố Hồ Chí Minh".
+- **B. Bỏ dòng**
+  1. Trùng `item_id`: 0.
+  2. **Tin đăng trùng** (cùng tên + shop + giá, khác `item_id`): 4 cặp → bỏ 4 bản sao. Cùng tên + shop nhưng khác giá thì giữ.
+  3. **Ngoại lệ giá** = hàng rào Tukey 3×IQR trên log10(giá) ≈ 2.921 – 20.141.427 đ, làm tròn **3.000 – 20.000.000 đ** (thay mốc 30k–20tr cũ).
+     - Đầu cao: chỉ loại Kinera 77,2 triệu (gấp 5,2 lần giá kế tiếp, 0 lượt bán, 0 đánh giá, không bảo hành). Tai nghe 5–15 triệu đều là flagship thật có người mua → giữ.
+     - Đầu thấp: mốc 30k **không có cơ sở** (không quy tắc thống kê nào cho cận dưới gần 30k, không có khoảng trống giá) → bỏ mốc.
+     - Không dùng 1,5×IQR vì nó loại 20 tai nghe cao cấp thật.
+  - **Không bỏ dòng "không phải tai nghe"**: 35 dòng danh mục lạ ("Mật Ong", "Thắt lưng nữ"…) đọc tên đều là tai nghe thật; không có tai nghe chỉ có dây.
+- **C. Sửa giá trị sai** (đặt trống, không bỏ dòng)
+  - C1. `product_type` sai danh mục → trống, cờ `sai_danh_muc` (35 dòng).
+  - C2. Sai đơn vị: trở kháng ghi `mm` (cỡ driver) / `dB` (độ nhạy); giờ pin ghi "Chờ" (thời gian chờ).
+  - C3. Ngoài khoảng hợp lệ (`chung.KHOANG_HOP_LE`): Bluetooth 4,0–6,1 · giờ pin 1–100 (cụm 15 tai nghe i12/Pro4 ~60k khai 220 giờ) · trở kháng 4–200 Ω (300 Ω là thông số tai nghe có dây) · bảo hành 0–60 tháng.
+  - C4. Thương hiệu: gộp "OEM", "TWS", "Nobard" → "No Brand"; gộp hoa/thường (FIIL/fiil, Shuke/SHUKE).
+  - C5. Điền thương hiệu trống từ tiền tố tên "X | …" (tiền tố khớp brand 98% khi có cả hai): trống 361 → 299.
+  - C6. Viết hoa mã IP (ip54 → IP54).
+- **D. Cờ:** `sai_danh_muc`, `thieu_chi_tiet` (timeout/app_only, không có thông số), `dot_cao` (13/11 hay 19/11).
+- Ghi nhận nhưng **chuyển B2**: cột trống 100% / 1 giá trị, cột chỉ có ở đợt 13/11, `n_variants` tới 676, phí ship > 300k, 3 dòng bảo hành mâu thuẫn.
+- Notebook có ô kiểm tra tự động (10 điều kiện, `assert`) để ai sửa `lam_sach()` làm hỏng là biết ngay.
+- **Kết quả: 1.550 → 1.545 dòng**, 325 shop có tên, 150 dòng thiếu tên shop, giá 15.000 – 14.990.000 đ.
 
 ### B2. EDA hướng Machine Learning ⬜
 
 Không lặp lại EDA của DS111. Chỉ làm những gì phục vụ mô hình:
-- Phân phối biến mục tiêu trước và sau log; ngoại lệ giá (hàng < 30k, > 3 triệu) giữ hay bỏ.
+- Phân phối biến mục tiêu trước và sau log. Ngoại lệ giá đã chốt ở B1 (Tukey 3×IQR trên log); B2 chỉ xem lại sai số mô hình ở hai đầu giá.
 - **Kiểm tra rò rỉ dữ liệu:** `original_price` (giá gốc × giảm giá = giá), lượt bán, số đánh giá, điểm sao, tỉ lệ mua lại đều **phải loại**, vì sản phẩm mới chưa có hoặc chúng chứa luôn đáp án.
 - Tỉ lệ khuyết từng cột → quyết định điền giá trị hay thêm cờ khuyết.
 - Số mức của biến phân loại (thương hiệu ~80 mức) → gộp mức hiếm.
 - **Trùng lặp gần giống:** cùng shop đăng nhiều sản phẩm gần như giống hệt (tên khác vài chữ). 5 shop lớn nhất chiếm ~32% số dòng (1 shop > 200 dòng). Đây là lý do dùng CV theo nhóm ở B4.
 - **Cột khuyết theo đợt cào, không theo sản phẩm:** `is_lazmall`, `is_freeship`, `in_stock`, `shop_id`… trống 71% vì đợt cào 19/11 không lấy. **Loại khỏi đặc trưng** (nếu thêm cờ khuyết, mô hình chỉ học được "dòng thuộc đợt nào").
-- **Ngưỡng ngoại lệ cho cột số** (đặt thành rỗng rồi để Imputer điền): `battery_hours_num` > 100 giờ, `impedance_ohm` > 600, `warranty_months` > 60, `bluetooth_version_num` ngoài 4–6,5; `n_variants` cắt trần 20; `shipping_fee`, `store_sold_num` lấy log.
+- **Ngưỡng ngoại lệ cho cột số:** đã làm ở B1 (luật C2–C3, giá trị sai → trống). B2 chỉ còn: `n_variants` cắt trần 20; `shipping_fee`, `store_sold_num` lấy log.
 - **Đầu ra của B2 (hạn 27/11):** bảng "cột giữ / bỏ / lý do" gửi Người 1 để làm B3.
 
 ### B3. Feature engineering và tiền xử lý (Pipeline dùng chung) ⬜
@@ -282,7 +301,7 @@ Mọi thử nghiệm đều ghi vào **nhật ký** (bảng mẫu ở 4.5), kể
 | Mã | Yếu tố thử | Các phương án | Người |
 |---|---|---|---|
 | KB-C-07 | Biến mục tiêu | `log10(price)` vs `price` (so trên MAE VNĐ và MAPE) | Người 3 |
-| KB-C-08 | Ngoại lệ giá | lọc 30k–20 triệu vs không lọc vs 50k–10 triệu | Người 1 |
+| KB-C-08 | Ngoại lệ giá | Tukey 3×IQR log (3k–20tr, đang dùng) vs không lọc vs 30k–20tr; chấm trên cùng các dòng chung | Người 1 |
 | KB-C-09 | Nhóm đặc trưng (ablation) | chỉ cấu trúc → + regex tên → + TF-IDF → + TF-IDF + SVD | Người 1 |
 | KB-C-10 | Cờ khuyết | `add_indicator=True` vs `False` | Người 1 |
 | KB-C-11 | Gộp thương hiệu hiếm | `min_frequency` = 3 / 5 / 10 | Người 1 |
@@ -362,7 +381,9 @@ Mỗi lần xong một phần: thêm một dòng vào 6.1, đánh dấu ✅ ở 
 | 25/11 | Huy | Dữ liệu | Thu thập và đưa lên bộ dữ liệu Lazada 1.550 dòng × 73 cột | `data/lazada_tai_nghe_1500.csv`, `data/README.md` |
 | 26/11 | Huy | Chuẩn bị | Viết pipeline, đưa dữ liệu thô + log cào | `PIPELINE_DO_AN_ML.md`, `data/raw/` |
 | 26/11 | Huy | **B0** ✅ | Định nghĩa bài toán (hồi quy `log10(price)`, dự đoán lúc vừa đăng bán); danh sách 21 cột rò rỉ; 5 thang đo (chính: RMSE log); mục tiêu R² ≥ 0,55 theo GroupKFold ≈ RMSE log 0,282; quy tắc chọn mô hình | `notebooks/01_chuan_bi_du_lieu.ipynb` (mục B0), `chung.py` (`tinh_thang_do`, `rmse_log`, `mae_vnd`, `mape`, `ty_le_trung_20`, `COT_RO_RI`) |
-| 26/11 | Huy | **B1** ✅ | Làm sạch 1.550 → **1.539 dòng** (bỏ 11 dòng giá ngoài 30k–20tr). **Đổi luật:** 35 dòng danh mục lạ đều là tai nghe thật → giữ, xóa `product_type`, thêm cờ `sai_danh_muc`; thêm cờ `thieu_chi_tiet` (153 dòng timeout/app_only); làm sạch ký tự lạ trong tên | `notebooks/01_chuan_bi_du_lieu.ipynb` (mục B1), `chung.py` (`lam_sach`), `data/lazada_sach.csv` |
+| 26/11 | Huy | **B1** ✅ | Làm sạch 1.550 → 1.539 dòng (bỏ 11 dòng giá ngoài 30k–20tr). **Đổi luật:** 35 dòng danh mục lạ đều là tai nghe thật → giữ, xóa `product_type`, thêm cờ `sai_danh_muc`; thêm cờ `thieu_chi_tiet` (153 dòng timeout/app_only); làm sạch ký tự lạ trong tên | `notebooks/01_chuan_bi_du_lieu.ipynb` (mục B1), `chung.py` (`lam_sach`), `data/lazada_sach.csv` |
+| 27/11 | Huy | **B1** (sửa) | Thêm **dẫn chứng cho ngưỡng ngoại lệ giá**: so 5 quy tắc (Tukey 1,5/3×IQR, z-score, MAD), biểu đồ hàng rào, khoảng trống giá, đọc từng sản phẩm hai đầu. Đổi ngưỡng 30k–20tr → **Tukey 3×IQR trên log (3k–20tr)**: bỏ mốc 30k vì không có cơ sở; chỉ loại Kinera 77,2tr → còn **1.549 dòng** | `notebooks/01_chuan_bi_du_lieu.ipynb` (mục B1.1b), `chung.py` (`GIA_MIN`), `data/lazada_sach.csv`, `PIPELINE_DO_AN_ML.md` |
+| 27/11 | Huy | **B1** (làm lại kỹ) | Rà soát toàn bộ 73 cột rồi viết lại `lam_sach()` theo 4 nhóm luật: A chuẩn hóa chuỗi (**gộp tên shop bị tách vì dấu cách**, 330 → 325 shop, sửa rò rỉ GroupKFold), B bỏ dòng (**4 tin đăng trùng** + Kinera), C sửa giá trị sai (thông số sai đơn vị / ngoài khoảng hợp lệ, gộp và điền thương hiệu), D cờ. Mỗi luật có dẫn chứng; thêm nhật ký số ô bị sửa và 10 kiểm tra tự động. Còn **1.545 dòng** | `notebooks/01_chuan_bi_du_lieu.ipynb` (mục B1.0–B1.7), `chung.py` (`lam_sach`, `KHOANG_HOP_LE`, `GIA_TRI_RONG`, `BRAND_KHONG_TH`), `data/lazada_sach.csv`, `PIPELINE_DO_AN_ML.md` |
 
 ### 6.2 Trạng thái từng bước
 
@@ -381,6 +402,6 @@ Mỗi lần xong một phần: thêm một dòng vào 6.1, đánh dấu ✅ ở 
 
 ### 6.3 Việc cần người khác biết
 
-- **Từ B1 cho cả nhóm:** dùng `chung.lam_sach()` hoặc đọc `data/lazada_sach.csv`, đừng tự lọc lại. Số dòng chính thức là **1.539** (các con số "1.523 dòng" ở mục 4.1 là của lần thử nhanh cũ; B5 sẽ chấm lại mốc 0,307).
+- **Từ B1 cho cả nhóm:** dùng `chung.lam_sach()` hoặc đọc `data/lazada_sach.csv`, đừng tự lọc lại. Số dòng chính thức là **1.545** (các con số "1.523 dòng" ở mục 4.1 là của lần thử nhanh cũ; B5 sẽ chấm lại mốc 0,307).
 - **Cho Người 2 (B2):** `battery_hours_num` có giá trị 220h ở tai nghe 60k; `brand` viết không thống nhất (hoa/thường, trống dù tên có thương hiệu); `location` có cả "China" và "Nước ngoài".
 
